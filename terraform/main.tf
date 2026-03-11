@@ -70,3 +70,14 @@ resource "azurerm_role_assignment" "github_actions_aks_admin" {
 
   depends_on = [module.aks]
 }
+
+# ─── AKS Kubelet Identity: AcrPull on ACR ─────────────────────────────────────
+# Allows AKS worker nodes to pull images from ACR without imagePullSecrets.
+# The kubelet managed identity must have AcrPull on the ACR resource.
+resource "azurerm_role_assignment" "aks_acr_pull" {
+  principal_id         = module.aks.kubelet_identity[0].object_id
+  role_definition_name = "AcrPull"
+  scope                = module.acr.acr_id
+
+  depends_on = [module.aks, module.acr]
+}
