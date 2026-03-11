@@ -4,11 +4,17 @@
   "description": "Simple Node.js app for Kubernetes deployment task",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "jest --forceExit --coverage",
+    "lint": "node --check index.js"
   },
   "author": "Candidate",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.1.3"
   }
 }

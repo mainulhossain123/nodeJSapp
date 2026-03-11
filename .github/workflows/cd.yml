@@ -95,6 +95,9 @@ jobs:
             echo "tag=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Lint Helm chart
+        run: helm lint ${{ env.HELM_CHART_PATH }} --values ${{ env.HELM_CHART_PATH }}/values-staging.yaml
+
       - name: Deploy to Staging via Helm
         run: |
           helm upgrade --install ${{ env.RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} \
@@ -160,6 +163,9 @@ jobs:
         uses: azure/setup-helm@v4
         with:
           version: "v3.14.0"
+
+      - name: Lint Helm chart
+        run: helm lint ${{ env.HELM_CHART_PATH }} --values ${{ env.HELM_CHART_PATH }}/values-production.yaml
 
       - name: Deploy to Production via Helm
         run: |

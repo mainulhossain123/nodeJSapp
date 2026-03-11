@@ -8,6 +8,11 @@ app.get('/', (req, res) => {
   res.json({ message: "Hello from Node.js app running on Kubernetes!" });
 });
 
-app.listen(port, () => {
-  console.log(`App listening on port ${port}`);
-});
+// Only start the server when run directly — not when required by tests
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`App listening on port ${port}`);
+  });
+}
+
+module.exports = app;
