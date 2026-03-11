@@ -81,6 +81,14 @@ jobs:
           resource-group: ${{ env.RG_STAGING }}
           cluster-name: ${{ env.AKS_STAGING }}
 
+      - name: Install kubelogin
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: "latest"
+
+      - name: Convert kubeconfig for AAD auth
+        run: kubelogin convert-kubeconfig -l azurecli
+
       - name: Install Helm
         uses: azure/setup-helm@v4
         with:
@@ -158,6 +166,14 @@ jobs:
         with:
           resource-group: ${{ env.RG_PRODUCTION }}
           cluster-name: ${{ env.AKS_PRODUCTION }}
+
+      - name: Install kubelogin
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: "latest"
+
+      - name: Convert kubeconfig for AAD auth
+        run: kubelogin convert-kubeconfig -l azurecli
 
       - name: Install Helm
         uses: azure/setup-helm@v4
