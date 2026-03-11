@@ -2,6 +2,7 @@
 # Node.js
 node_modules/
 npm-debug.log*
+coverage/
 
 # Terraform
 .terraform/
@@ -9,7 +10,8 @@ npm-debug.log*
 *.tfstate.backup
 *.tfstate.*.backup
 terraform.tfvars
-.terraform.lock.hcl
+# NOTE: .terraform.lock.hcl is intentionally NOT ignored — it must be committed
+#       to ensure reproducible provider versions across all environments.
 tfplan
 tfplan.out
 crash.log

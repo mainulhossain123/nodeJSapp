@@ -56,3 +56,17 @@ module "aks" {
 
   depends_on = [module.networking, module.acr]
 }
+
+# ─── GitHub Actions CI/CD: AKS RBAC permissions ────────────────────────────────
+# The AKS cluster uses Azure AD RBAC (azure_rbac_enabled = true).
+# The GitHub Actions SP needs "Azure Kubernetes Service RBAC Cluster Admin"
+# on the cluster scope so it can create namespaces, deployments, secrets, etc.
+# This block is a no-op when github_actions_sp_object_id is not set.
+resource "azurerm_role_assignment" "github_actions_aks_admin" {
+  count                = var.github_actions_sp_object_id != "" ? 1 : 0
+  principal_id         = var.github_actions_sp_object_id
+  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
+  scope                = module.aks.cluster_id
+
+  depends_on = [module.aks]
+}

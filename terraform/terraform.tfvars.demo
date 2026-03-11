@@ -60,3 +60,10 @@ tags = {
   managed_by = "terraform"
   team       = "devops"
 }
+
+# ─── GitHub Actions CI/CD ────────────────────────────────────────────────────
+# Object ID of the service principal stored in the AZURE_CREDENTIALS secret.
+# Grants "Azure Kubernetes Service RBAC Cluster Admin" so the pipeline can
+# deploy Helm releases to the cluster.
+# Get value: az ad sp show --id <clientId from AZURE_CREDENTIALS> --query id -o tsv
+github_actions_sp_object_id = "b3fedb2b-efac-4b7a-a864-fa038526e61f"

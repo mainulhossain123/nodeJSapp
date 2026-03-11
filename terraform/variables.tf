@@ -93,3 +93,11 @@ variable "tags" {
     team        = "devops"
   }
 }
+
+variable "github_actions_sp_object_id" {
+  description = "Object ID of the GitHub Actions service principal. Required for AKS RBAC Cluster Admin role assignment so CI/CD can deploy to the cluster."
+  type        = string
+  default     = ""
+  # Get value: az ad sp show --id <appId from AZURE_CREDENTIALS JSON> --query id -o tsv
+  # Or read from the GitHub Actions error: User \"<object-id>\" cannot list resource...
+}

@@ -113,6 +113,9 @@ resource "azurerm_kubernetes_cluster" "main" {
     azure_rbac_enabled = true
   }
 
+  # OIDC Issuer — required for Workload Identity and AAD pod-managed identity
+  oidc_issuer_enabled = true
+
   # Auto-upgrade channel: "patch" — automatically apply patch-level K8s upgrades
   automatic_channel_upgrade = "patch"
 
