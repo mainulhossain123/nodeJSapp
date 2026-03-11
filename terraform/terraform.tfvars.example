@@ -1,0 +1,20 @@
+# terraform.tfvars.example — Copy to terraform.tfvars and fill in values
+# NEVER commit terraform.tfvars to version control (contains sensitive values)
+
+environment           = "staging"
+location              = "eastus2"
+resource_group_name   = "rg-nodejs-aks"
+kubernetes_version    = "1.31"   # check: az aks get-versions --location eastus2 -o tsv
+aks_system_node_count = 1
+aks_system_vm_size    = "Standard_D2s_v3"
+aks_user_vm_size      = "Standard_D4s_v3"
+aks_min_node_count    = 2
+aks_max_node_count    = 10
+acr_sku               = "Premium"
+
+tags = {
+  project     = "nodejs-aks"
+  managed_by  = "terraform"
+  team        = "devops"
+  # Note: 'environment' tag is auto-added by main.tf from the environment variable above
+}

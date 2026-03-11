@@ -1,0 +1,62 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# terraform.tfvars.demo — Cost-optimised demo / validation deployment
+#
+# Contains ALL modules required by the assignment (networking, AKS, ACR, IAM).
+# Only VM sizes, SKUs, and node counts are scaled down for demo use.
+#
+# Estimated cost: ~$5–6 / day while running.
+# Run 'terraform destroy' when done — deploy-demo.ps1 reminds you.
+#
+# Usage (automated — recommended):
+#   .\deploy-demo.ps1          # handles backend, init, plan, apply, kubectl
+#
+# Usage (manual):
+#   cd terraform
+#   # Create state backend first (see deploy-demo.ps1 Step 2)
+#   cp terraform.tfvars.demo terraform.tfvars
+#   terraform init -backend-config="storage_account_name=<your_account>"
+#   terraform plan  -out=tfplan
+#   terraform show  tfplan > terraform-plan-output.txt   # real deliverable
+#   terraform apply tfplan
+# ─────────────────────────────────────────────────────────────────────────────
+
+environment         = "staging"
+location            = "eastus2"
+resource_group_name = "rg-nodejs-aks"
+
+# Kubernetes version — deploy-demo.ps1 auto-detects the latest stable version
+# and overwrites this value before running terraform plan.
+# To check manually: az aks get-versions --location eastus2 --query "values[?isPreview==null].version" -o tsv
+kubernetes_version = "1.31"
+
+# ─── System Node Pool ────────────────────────────────────────────────────────
+# Standard_D2s_v3: 2 vCPU | 8 GB RAM | ~$70/month
+# B-series VMs are not available in this subscription in eastus2.
+aks_system_node_count = 1
+aks_system_vm_size    = "Standard_D2s_v3"
+
+# ─── User Node Pool (application workloads) ──────────────────────────────────
+# Standard_D2s_v3: 2 vCPU | 8 GB RAM | ~$70/month per node
+# min_count = 1 saves cost vs the production minimum of 2
+aks_user_vm_size   = "Standard_D2s_v3"
+aks_min_node_count = 1
+aks_max_node_count = 3
+
+# ─── Availability Zones ──────────────────────────────────────────────────────
+# Standard_B2ms on the Free AKS SKU tier does not support availability zones
+# in eastus2 (Azure returns AvailabilityZoneNotSupported). Set to [] to disable.
+# Production deployments with Standard_D-series VMs should use ["1","2","3"].
+node_pool_zones = []
+
+# ─── Container Registry ──────────────────────────────────────────────────────
+# Basic SKU: ~$5/month
+# Public access is automatically enabled because environment = "staging"
+# (the private endpoint is only created when environment = "production")
+# No retention policy applied (Premium-only feature, handled by dynamic block)
+acr_sku = "Basic"
+
+tags = {
+  project    = "nodejs-aks"
+  managed_by = "terraform"
+  team       = "devops"
+}

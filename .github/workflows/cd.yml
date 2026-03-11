@@ -1,0 +1,199 @@
+# cd.yml — Continuous Deployment
+# Deploys to staging automatically when CI passes on main
+# Deploys to production via manual trigger (requires approval)
+
+name: CD — Deploy to AKS
+
+on:
+  # Auto-deploy to staging when CI passes on main
+  workflow_run:
+    workflows: ["CI — Build, Test & Push"]
+    types: [completed]
+    branches: [main]
+  # Manual production deployment trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+      image_tag:
+        description: "Docker image tag to deploy (git SHA)"
+        required: true
+        type: string
+
+env:
+  HELM_CHART_PATH: helm/nodejs-app
+  RELEASE_NAME: nodejs-app
+  # All infrastructure names are derived from the Terraform naming convention.
+  # Pattern: rg-nodejs-aks-<env>  and  aks-nodejs-<env>
+  # These match exactly what terraform/modules/networking and aks create.
+  # No infrastructure names need to be stored as secrets.
+  RG_STAGING:      rg-nodejs-aks-staging
+  AKS_STAGING:     aks-nodejs-staging
+  RG_PRODUCTION:   rg-nodejs-aks-production
+  AKS_PRODUCTION:  aks-nodejs-production
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  # ─── Deploy to Staging ────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    # Run on successful CI, or manual trigger targeting staging
+    if: >
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://nodejs-app-staging.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # CRITICAL: checkout the exact SHA that CI built — prevents Helm chart drift
+          # For workflow_run: use the trigger SHA; for workflow_dispatch: use current HEAD
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Resolve ACR login server from Azure
+        # Query ACR in the staging resource group — no ACR_LOGIN_SERVER secret needed.
+        run: |
+          ACR_LOGIN_SERVER=$(az acr list \
+            --resource-group ${{ env.RG_STAGING }} \
+            --query "[0].loginServer" -o tsv)
+          echo "ACR_LOGIN_SERVER=${ACR_LOGIN_SERVER}" >> $GITHUB_ENV
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ env.RG_STAGING }}
+          cluster-name: ${{ env.AKS_STAGING }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "v3.14.0"
+
+      - name: Determine image tag
+        id: image-tag
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to Staging via Helm
+        run: |
+          helm upgrade --install ${{ env.RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} \
+            --namespace nodejs-app-staging \
+            --create-namespace \
+            --values ${{ env.HELM_CHART_PATH }}/values.yaml \
+            --values ${{ env.HELM_CHART_PATH }}/values-staging.yaml \
+            --set image.repository=${{ env.ACR_LOGIN_SERVER }}/nodejs-app \
+            --set image.tag=${{ steps.image-tag.outputs.tag }} \
+            --timeout 5m \
+            --wait \
+            --atomic
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/${{ env.RELEASE_NAME }} \
+            -n nodejs-app-staging \
+            --timeout=300s
+
+      - name: Run smoke test
+        run: |
+          # Wait for service to be ready
+          sleep 10
+          # Port-forward and test health endpoint
+          kubectl port-forward svc/${{ env.RELEASE_NAME }} 8080:80 \
+            -n nodejs-app-staging &
+          sleep 5
+          curl -sf http://localhost:8080/health || exit 1
+          echo "Smoke test passed!"
+
+  # ─── Deploy to Production (Manual Approval Required) ─────────────────────
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    # Only run on manual trigger targeting production — no staging dependency
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    environment:
+      name: production
+      url: https://nodejs-app.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Resolve ACR login server from Azure
+        run: |
+          ACR_LOGIN_SERVER=$(az acr list \
+            --resource-group ${{ env.RG_STAGING }} \
+            --query "[0].loginServer" -o tsv)
+          echo "ACR_LOGIN_SERVER=${ACR_LOGIN_SERVER}" >> $GITHUB_ENV
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ env.RG_PRODUCTION }}
+          cluster-name: ${{ env.AKS_PRODUCTION }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "v3.14.0"
+
+      - name: Deploy to Production via Helm
+        run: |
+          helm upgrade --install ${{ env.RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} \
+            --namespace nodejs-app-production \
+            --create-namespace \
+            --values ${{ env.HELM_CHART_PATH }}/values.yaml \
+            --values ${{ env.HELM_CHART_PATH }}/values-production.yaml \
+            --set image.repository=${{ env.ACR_LOGIN_SERVER }}/nodejs-app \
+            --set image.tag=${{ github.event.inputs.image_tag }} \
+            --timeout 10m \
+            --wait \
+            --atomic
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/${{ env.RELEASE_NAME }} \
+            -n nodejs-app-production \
+            --timeout=600s
+
+      - name: Run production smoke test
+        run: |
+          sleep 10
+          kubectl port-forward svc/${{ env.RELEASE_NAME }} 8080:80 \
+            -n nodejs-app-production &
+          sleep 5
+          curl -sf http://localhost:8080/health || exit 1
+          curl -sf http://localhost:8080/ || exit 1
+          echo "Production smoke test passed!"
+
+      - name: Annotate deployment
+        if: success()
+        run: |
+          kubectl annotate deployment/${{ env.RELEASE_NAME }} \
+            -n nodejs-app-production \
+            kubernetes.io/change-cause="Deployed image tag ${{ github.event.inputs.image_tag }} via GitHub Actions" \
+            --overwrite

@@ -1,0 +1,16 @@
+apiVersion: v2
+name: nodejs-app
+description: >
+  Production-grade Helm chart for Node.js REST API on Azure AKS.
+  Includes HA deployment, autoscaling, network policies, and secret management.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+maintainers:
+  - name: DevOps Team
+    email: devops@company.com
+keywords:
+  - nodejs
+  - rest-api
+  - kubernetes
+  - aks

@@ -1,0 +1,45 @@
+# ─── .gitignore ────────────────────────────────────────────────────────────────
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfstate.*.backup
+terraform.tfvars
+.terraform.lock.hcl
+tfplan
+tfplan.out
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform plan output (generated at runtime)
+terraform/tfplan
+terraform/tfplan.out
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Environment
+.env
+.env.local
+
+# Build outputs
+dist/
+build/
+terraform-outputs.json
