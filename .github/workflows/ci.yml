@@ -54,6 +54,12 @@ jobs:
       - name: Audit dependencies for vulnerabilities
         run: npm audit --audit-level=high
 
+      - name: Validate Kubernetes manifests (dry-run)
+        run: |
+          kubectl kustomize k8s/overlays/staging  > /dev/null
+          kubectl kustomize k8s/overlays/production > /dev/null
+          echo "Kustomize build: OK"
+
   # ─── Job 2: Build & Push Docker Image ────────────────────────────────────
   build-and-push:
     name: Build & Push Image

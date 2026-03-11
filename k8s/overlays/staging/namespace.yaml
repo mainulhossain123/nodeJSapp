@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: nodejs-app
+  name: nodejs-app-staging
   labels:
     app.kubernetes.io/name: nodejs-app
-    app.kubernetes.io/managed-by: kubectl
+    environment: staging

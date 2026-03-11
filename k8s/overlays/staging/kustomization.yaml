@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Target namespace for all base resources
+namespace: nodejs-app-staging
+
+resources:
+  - ../../base
+  - namespace.yaml
+
+# Replace the placeholder image with the real ACR image at deploy time.
+# The CD pipeline uses sed to substitute REGISTRY_PLACEHOLDER and TAG_PLACEHOLDER
+# before running kubectl apply -k.
+images:
+  - name: nodejs-app
+    newName: REGISTRY_PLACEHOLDER
+    newTag: TAG_PLACEHOLDER
+
+# Staging-specific replica count (overrides base spec.replicas)
+replicas:
+  - name: nodejs-app
+    count: 2
+
+# Staging-specific env vars via strategic merge patch
+patches:
+  - path: deployment-patch.yaml

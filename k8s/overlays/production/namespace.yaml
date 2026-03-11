@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nodejs-app-production
+  labels:
+    app.kubernetes.io/name: nodejs-app
+    environment: production

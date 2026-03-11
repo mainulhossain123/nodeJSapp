@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Target namespace for all base resources
+namespace: nodejs-app-production
+
+resources:
+  - ../../base
+  - namespace.yaml
+
+# Replace the placeholder image with the real ACR image at deploy time.
+images:
+  - name: nodejs-app
+    newName: REGISTRY_PLACEHOLDER
+    newTag: TAG_PLACEHOLDER
+
+# Production replica count
+replicas:
+  - name: nodejs-app
+    count: 3
+
+# Production-specific env vars and resource limits via strategic merge patch
+patches:
+  - path: deployment-patch.yaml

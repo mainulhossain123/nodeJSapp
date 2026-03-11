@@ -2,12 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nodejs-app
-  namespace: nodejs-app
   labels:
     app.kubernetes.io/name: nodejs-app
-    app.kubernetes.io/version: "1.0.0"
 spec:
-  replicas: 2
+  # replicas set per-overlay via the kustomization replicas field
   selector:
     matchLabels:
       app.kubernetes.io/name: nodejs-app
@@ -20,7 +18,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: nodejs-app
-        app.kubernetes.io/version: "1.0.0"
     spec:
       serviceAccountName: nodejs-app-sa
       automountServiceAccountToken: false
@@ -33,8 +30,8 @@ spec:
           type: RuntimeDefault
       containers:
         - name: nodejs-app
-          # Replace <ACR_LOGIN_SERVER> with your actual ACR URL
-          image: <ACR_LOGIN_SERVER>/nodejs-app:<IMAGE_TAG>
+          # Image name is a placeholder — replaced at deploy time via kustomize
+          image: nodejs-app:latest
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
