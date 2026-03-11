@@ -176,7 +176,7 @@ Write-Host ""
 Write-Host "  Next steps:" -ForegroundColor Cyan
 Write-Host "  1. Push this repo to GitHub to trigger the CI/CD pipeline"
 Write-Host "  2. CI will build the Docker image and push it to ACR"
-Write-Host "  3. CD will deploy the app to your AKS cluster via Helm"
+  Write-Host "  3. CD will deploy the app to your AKS cluster via kubectl apply -k (kustomize)"
 Write-Host ""
 Write-Host "  To destroy all resources when done:" -ForegroundColor Yellow
 Write-Host "  cd terraform && terraform destroy"
