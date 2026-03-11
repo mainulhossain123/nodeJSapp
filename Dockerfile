@@ -19,6 +19,7 @@ FROM node:18-alpine AS runtime
 # Security: create non-root user/group
 # Running as root inside container = privilege escalation risk
 # Also install wget for healthcheck (not available by default in alpine)
+# hadolint ignore=DL3018
 RUN addgroup -g 1001 -S nodejs && \
     adduser  -u 1001 -S nodeapp -G nodejs && \
     apk add --no-cache wget
