@@ -94,7 +94,7 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
         with:
-          version: "v3.14.0"
+          version: "v3.17.0"
 
       - name: Determine image tag
         id: image-tag
@@ -117,9 +117,22 @@ jobs:
             --values ${{ env.HELM_CHART_PATH }}/values-staging.yaml \
             --set image.repository=${{ env.ACR_LOGIN_SERVER }}/nodejs-app \
             --set image.tag=${{ steps.image-tag.outputs.tag }} \
-            --timeout 5m \
+            --timeout 10m \
             --wait \
-            --atomic
+            --atomic \
+            --burst-limit 100
+
+      - name: Debug deployment failure
+        if: failure()
+        run: |
+          echo "=== Node Status ==="
+          kubectl get nodes -o wide || true
+          echo "=== Pods ==="
+          kubectl get pods -n nodejs-app-staging -o wide || true
+          echo "=== Pod Events ==="
+          kubectl describe pods -n nodejs-app-staging || true
+          echo "=== Helm Status ==="
+          helm status ${{ env.RELEASE_NAME }} -n nodejs-app-staging || true
 
       - name: Verify deployment
         run: |
@@ -182,7 +195,7 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
         with:
-          version: "v3.14.0"
+          version: "v3.17.0"
 
       - name: Lint Helm chart
         run: helm lint ${{ env.HELM_CHART_PATH }} --values ${{ env.HELM_CHART_PATH }}/values-production.yaml
@@ -198,7 +211,20 @@ jobs:
             --set image.tag=${{ github.event.inputs.image_tag }} \
             --timeout 10m \
             --wait \
-            --atomic
+            --atomic \
+            --burst-limit 100
+
+      - name: Debug deployment failure
+        if: failure()
+        run: |
+          echo "=== Node Status ==="
+          kubectl get nodes -o wide || true
+          echo "=== Pods ==="
+          kubectl get pods -n nodejs-app-production -o wide || true
+          echo "=== Pod Events ==="
+          kubectl describe pods -n nodejs-app-production || true
+          echo "=== Helm Status ==="
+          helm status ${{ env.RELEASE_NAME }} -n nodejs-app-production || true
 
       - name: Verify deployment
         run: |

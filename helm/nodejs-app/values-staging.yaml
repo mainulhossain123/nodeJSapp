@@ -14,17 +14,12 @@ resources:
     cpu: "500m"
     memory: "256Mi"
 
+# Ingress disabled: no NGINX Ingress Controller installed in staging
 ingress:
-  enabled: true
-  hosts:
-    - host: nodejs-app-staging.example.com
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - secretName: nodejs-app-staging-tls
-      hosts:
-        - nodejs-app-staging.example.com
+  enabled: false
+
+# No availability zones in staging — disable zone-based topology spread
+topologySpreadConstraints: []
 
 autoscaling:
   enabled: true
