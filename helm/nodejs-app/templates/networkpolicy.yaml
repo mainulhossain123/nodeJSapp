@@ -16,7 +16,18 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow traffic from ingress controller namespace
+    # Allow kubelet health probes (liveness, readiness, startup)
+    # Kubelet runs on the host network — not a pod — so it needs an ipBlock rule.
+    # Azure CNI assigns node IPs from the AKS subnet; this CIDR must cover that subnet.
+    {{- if .Values.networkPolicy.nodeSubnetCidr }}
+    - from:
+        - ipBlock:
+            cidr: {{ .Values.networkPolicy.nodeSubnetCidr }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.targetPort }}
+    {{- end }}
+    # Allow traffic from ingress controller namespace and same-namespace pods
     - from:
         - namespaceSelector:
             matchLabels:

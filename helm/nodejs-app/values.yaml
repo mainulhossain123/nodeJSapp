@@ -193,3 +193,7 @@ secrets:
 # Network Policy
 networkPolicy:
   enabled: true
+  # CIDR of the AKS node subnet — required for kubelet health probes.
+  # Kubelet runs on the host network (not as a pod), so it needs an ipBlock rule.
+  # Must match the AKS subnet CIDR from Terraform (e.g., 10.0.1.0/24).
+  nodeSubnetCidr: ""

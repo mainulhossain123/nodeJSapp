@@ -33,5 +33,8 @@ config:
   NODE_ENV: "staging"
   LOG_LEVEL: "debug"
 
+# NetworkPolicy disabled in staging — no NGINX Ingress Controller installed,
+# and Azure NPM blocks kubelet health probes without nodeSubnetCidr configuration.
+# Enable in production with the correct nodeSubnetCidr.
 networkPolicy:
-  enabled: true
+  enabled: false
