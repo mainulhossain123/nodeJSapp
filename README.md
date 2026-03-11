@@ -80,7 +80,7 @@ CI/CD Flow:
 │
 ├── terraform/                          # IaC — all Azure infrastructure
 │   ├── versions.tf                     # Provider version pins + remote state backend
-│   ├── providers.tf                    # AzureRM and Kubernetes providers
+    ├── providers.tf                    # AzureRM provider configuration
 │   ├── variables.tf                    # All configurable inputs with descriptions
 │   ├── main.tf                         # Module composition and role assignments
 │   ├── outputs.tf                      # Deployment outputs (cluster ID, ACR URL, etc.)
@@ -102,12 +102,12 @@ CI/CD Flow:
 │   │   ├── pdb.yaml                    # Pod Disruption Budget
 │   │   └── serviceaccount.yaml
 │   └── overlays/
-│       ├── staging/                    # Staging: 2 replicas, debug logging, no network policy
-│       └── production/                 # Production: 3 replicas, higher limits, network policy
+        ├── staging/                    # Staging: 2 replicas, debug logging
+        └── production/                 # Production: 3 replicas, higher resource limits
 │
 └── .github/workflows/
-    ├── ci.yml                          # CI: lint → test → audit → build → scan → push
-    └── cd.yml                          # CD: staging auto-deploy → production with approval
+    ├── ci.yml                          # CI: lint → test → audit → k8s validate → build+push → scan
+    └── cd.yml                          # CD: staging auto-deploy (workflow_run) → production manual dispatch
 ```
 
 ---
@@ -303,10 +303,9 @@ Triggered on every push and pull request to `main`. Each stage is a hard gate �
 | **Unit Tests** | Jest + supertest | All tests pass, coverage ≥ threshold |
 | **npm audit** | npm audit | No high or critical vulnerabilities in dependencies |
 | **K8s validate** | kubectl kustomize | Both overlays render without errors |
-| **Docker build** | Docker | Image builds successfully |
-| **Trivy scan** | aquasecurity/trivy-action | No HIGH or CRITICAL CVEs in the image |
-| **Hadolint** | hadolint/hadolint-action | No Dockerfile best-practice violations |
-| **ACR push** | docker/build-push-action | Only on `main` branch after all scans pass |
+| **Build + Push** | docker/build-push-action | Image built and pushed to ACR (main branch only) |
+| **Trivy scan** | aquasecurity/trivy-action | HIGH/CRITICAL CVEs uploaded to GitHub Security (non-blocking) |
+| **Hadolint** | hadolint/hadolint-action | No Dockerfile violations at warning level or above |
 
 ### CD Pipeline (`.github/workflows/cd.yml`)
 

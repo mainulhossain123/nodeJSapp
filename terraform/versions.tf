@@ -12,14 +12,6 @@ terraform {
       # The latest 3.x uses supported API versions (2024+).
       version = "~> 3.85"
     }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 2.47"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.25"
-    }
   }
 
   # Remote backend: Azure Blob Storage for state
