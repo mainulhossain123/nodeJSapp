@@ -1,4 +1,4 @@
-# Node.js Application — Production AKS Deployment
+﻿# Node.js Application - Production AKS Deployment
 
 ## Overview
 
@@ -78,13 +78,13 @@ CI/CD Flow:
 ├── tests/
 │   └── app.test.js                     # Unit + integration tests (Jest + supertest)
 │
-├── terraform/                          # IaC — all Azure infrastructure
+├── terraform/                          # IaC - all Azure infrastructure
 │   ├── versions.tf                     # Provider version pins + remote state backend
     ├── providers.tf                    # AzureRM provider configuration
 │   ├── variables.tf                    # All configurable inputs with descriptions
 │   ├── main.tf                         # Module composition and role assignments
 │   ├── outputs.tf                      # Deployment outputs (cluster ID, ACR URL, etc.)
-│   ├── terraform.tfvars.example        # Template — copy to terraform.tfvars and populate
+│   ├── terraform.tfvars.example        # Template - copy to terraform.tfvars and populate
 │   ├── terraform.tfvars.demo           # Cost-optimised configuration used in demo deploy
 │   ├── terraform-plan-output.txt       # Saved plan output (committed deliverable)
 │   ├── .terraform.lock.hcl             # Provider dependency lock file (committed)
@@ -132,7 +132,7 @@ CI/CD Flow:
   - User Access Administrator is required to assign roles (ACR pull for AKS, RBAC roles)
 - A Storage Account for Terraform remote state (created by `deploy-demo.ps1` automatically)
 
-### GitHub Actions Service Principal — Required Roles
+### GitHub Actions Service Principal - Required Roles
 
 The service principal used by GitHub Actions needs the following Azure RBAC roles before the CD pipeline can deploy to AKS:
 
@@ -158,12 +158,12 @@ This role assignment is also tracked in `terraform/main.tf` as `azurerm_role_ass
 
 ## Deployment
 
-### Option A — Automated Demo Deploy (Recommended)
+### Option A - Automated Demo Deploy (Recommended)
 
 `deploy-demo.ps1` automates everything end-to-end in a single command:
 
 ```powershell
-# Windows PowerShell — from repo root
+# Windows PowerShell - from repo root
 .\deploy-demo.ps1
 ```
 
@@ -174,11 +174,11 @@ The script:
 4. Builds and pushes the Docker image to ACR
 5. Deploys the manifests to the staging namespace via `kubectl apply -k`
 
-All resources are provisioned within a single Azure subscription using predictable naming conventions — no manual configuration steps required.
+All resources are provisioned within a single Azure subscription using predictable naming conventions - no manual configuration steps required.
 
 ---
 
-### Option B — Manual Step-by-Step Deployment
+### Option B - Manual Step-by-Step Deployment
 
 #### Step 1: Azure Authentication
 
@@ -287,7 +287,7 @@ Set the following secret in your GitHub repository (Settings → Secrets and var
 
 After creating the SP, assign the additional roles listed in the [Prerequisites](#github-actions-service-principal--required-roles) section.
 
-All other values (ACR name, AKS cluster name, resource groups) are derived automatically from Azure resource tags and naming conventions at pipeline runtime — no additional secrets needed.
+All other values (ACR name, AKS cluster name, resource groups) are derived automatically from Azure resource tags and naming conventions at pipeline runtime - no additional secrets needed.
 
 ---
 
@@ -295,7 +295,7 @@ All other values (ACR name, AKS cluster name, resource groups) are derived autom
 
 ### CI Pipeline (`.github/workflows/ci.yml`)
 
-Triggered on every push and pull request to `main`. Each stage is a hard gate — failure blocks the pipeline.
+Triggered on every push and pull request to `main`. Each stage is a hard gate - failure blocks the pipeline.
 
 | Stage | Tool | Gate Condition |
 |-------|------|---------------|
@@ -339,18 +339,18 @@ Current test coverage: **81%** (statements). Tests cover the Express route handl
 
 ## Key Assumptions
 
-1. **Cloud Provider:** Azure — AKS, ACR, VNet, Managed Identity, Log Analytics.
+1. **Cloud Provider:** Azure - AKS, ACR, VNet, Managed Identity, Log Analytics.
 2. **Kubernetes Version:** Auto-detected to latest stable (currently `1.34.x`); auto-upgrade set to `patch` channel.
-3. **Container Registry:** Azure Container Registry — **Basic SKU** (staging), **Premium SKU with private endpoint** (production).
-4. **Networking:** Azure CNI — pods receive real VNet IPs, enabling pod-level NSG and network policy enforcement.
+3. **Container Registry:** Azure Container Registry - **Basic SKU** (staging), **Premium SKU with private endpoint** (production).
+4. **Networking:** Azure CNI - pods receive real VNet IPs, enabling pod-level NSG and network policy enforcement.
 5. **Node Pools:** Separate system (tainted `CriticalAddonsOnly`) and user node pools for workload isolation.
-6. **VM Size:** `Standard_D2s_v3` (2 vCPU / 8 GiB) — cost-optimised for demo; scale up in production via `terraform.tfvars`.
+6. **VM Size:** `Standard_D2s_v3` (2 vCPU / 8 GiB) - cost-optimised for demo; scale up in production via `terraform.tfvars`.
 7. **Autoscaling:** Cluster Autoscaler (CA) for node scaling + HPA for pod scaling.
 8. **Key Vault CSI Driver:** The Secrets Store CSI Driver add-on is installed on the AKS cluster, enabling pods to mount Azure Key Vault secrets as volumes. Secret mounts are not required by this application but the infrastructure supports it.
 9. **Service Exposure:** The application service is `ClusterIP` (cluster-internal only). Ingress controllers and external DNS are environment-specific and outside the scope of this repository.
 10. **Production Authorization:** The `production` GitHub Actions environment should be configured with required reviewers in GitHub repository settings to enforce human approval before production deployments execute.
 11. **CI/CD Auth:** GitHub Actions authenticates to Azure via a service principal with `AZURE_CREDENTIALS` secret; no long-lived passwords or tokens elsewhere.
-12. **AKS RBAC:** `azure_rbac_enabled = true` — Kubernetes RBAC permissions are managed through Azure RBAC role assignments, not `kubeconfig` cluster-admin credentials.
+12. **AKS RBAC:** `azure_rbac_enabled = true` - Kubernetes RBAC permissions are managed through Azure RBAC role assignments, not `kubeconfig` cluster-admin credentials.
 
 ---
 
@@ -365,7 +365,7 @@ Current test coverage: **81%** (statements). Tests cover the Express route handl
 | **Seccomp profile** | `RuntimeDefault` seccomp profile enabled |
 | **Azure Network Policy** | Azure Network Policy Manager (NPM) enabled on cluster (`network_policy = "azure"`); enforces NetworkPolicy resources at the CNI layer |
 | **Private ACR** | Private endpoint in production; no public registry access |
-| **Managed Identity** | No passwords — AKS authenticates to ACR via managed identity |
+| **Managed Identity** | No passwords - AKS authenticates to ACR via managed identity |
 | **Image scanning** | Trivy vulnerability scanner in CI pipeline |
 | **Pod Disruption Budget** | Ensures availability during rolling updates and node drains |
 | **RBAC** | Azure AD integration with Kubernetes RBAC |
@@ -374,13 +374,13 @@ Current test coverage: **81%** (statements). Tests cover the Express route handl
 
 ## Monitoring & Observability
 
-- **Azure Monitor Container Insights** — enabled via Log Analytics workspace
+- **Azure Monitor Container Insights** - enabled via Log Analytics workspace
 - **Kubernetes health probes:**
   - **Liveness:** Restarts unhealthy containers (`/health`)
   - **Readiness:** Removes pods from service endpoints when not ready (`/health`)
   - **Startup:** Prevents premature liveness kills during boot
-- **Resource limits** — CPU/memory requests and limits prevent resource starvation
-- **Log retention** — 30 days (staging), 90 days (production)
+- **Resource limits** - CPU/memory requests and limits prevent resource starvation
+- **Log retention** - 30 days (staging), 90 days (production)
 
 ---
 
